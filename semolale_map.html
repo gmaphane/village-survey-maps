@@ -100,6 +100,116 @@
       }, 1000);
     });
     </script>
+
+    <!-- Mapbox Integration -->
+    <script>
+    // Wait for map to be ready, then add Mapbox layers
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            // Find the Leaflet map object
+            var mapElement = document.querySelector('.leaflet-container');
+            if (!mapElement || !mapElement._leaflet_id) return;
+
+            var map = mapElement._leaflet_map || window[Object.keys(window).find(key => key.startsWith('map_'))];
+            if (!map) return;
+
+            // Add Mapbox tile layers
+            var mapboxStreets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
+                attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
+                tileSize: 512,
+                zoomOffset: -1,
+                maxZoom: 22
+            });
+
+            var mapboxSatellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
+                attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
+                tileSize: 512,
+                zoomOffset: -1,
+                maxZoom: 22
+            });
+
+            var mapboxHybrid = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
+                attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
+                tileSize: 512,
+                zoomOffset: -1,
+                maxZoom: 22
+            });
+
+            // Add Mapbox Streets as default (bottom layer)
+            mapboxStreets.addTo(map);
+
+            // Update layer control to include Mapbox layers
+            var layerControl = document.querySelector('.leaflet-control-layers');
+            if (layerControl) {
+                var existingControl = layerControl._leaflet_control;
+                if (existingControl) {
+                    existingControl.addBaseLayer(mapboxStreets, "Mapbox Streets");
+                    existingControl.addBaseLayer(mapboxSatellite, "Mapbox Satellite");
+                    existingControl.addBaseLayer(mapboxHybrid, "Mapbox Hybrid");
+                }
+            }
+
+            // Improved GPS tracking - more responsive like Google Maps
+            var gpsMarker = null;
+            var accuracyCircle = null;
+            var watchId = null;
+
+            map.on('locationfound', function(e) {
+                var radius = e.accuracy / 2;
+
+                // Create or update GPS marker with pulsing effect
+                if (!gpsMarker) {
+                    gpsMarker = L.circleMarker(e.latlng, {
+                        color: '#4285f4',
+                        fillColor: '#4285f4',
+                        fillOpacity: 0.8,
+                        weight: 2,
+                        radius: 8
+                    }).addTo(map);
+
+                    // Add pulsing animation
+                    gpsMarker.getElement().style.animation = 'pulse 2s infinite';
+                } else {
+                    gpsMarker.setLatLng(e.latlng);
+                }
+
+                // Create or update accuracy circle
+                if (!accuracyCircle) {
+                    accuracyCircle = L.circle(e.latlng, {
+                        radius: radius,
+                        color: '#4285f4',
+                        fillColor: '#4285f4',
+                        fillOpacity: 0.1,
+                        weight: 1
+                    }).addTo(map);
+                } else {
+                    accuracyCircle.setLatLng(e.latlng);
+                    accuracyCircle.setRadius(radius);
+                }
+
+                console.log('[GPS Enhanced] Lat:', e.latlng.lat.toFixed(6),
+                           'Lng:', e.latlng.lng.toFixed(6),
+                           'Accuracy:', radius.toFixed(1) + 'm');
+            });
+
+        }, 1500);
+    });
+    </script>
+
+    <style>
+    /* Pulsing animation for GPS marker */
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(66, 133, 244, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(66, 133, 244, 0);
+        }
+    }
+    </style>
 </head>
 <body>
     
