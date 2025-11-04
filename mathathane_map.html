@@ -54,149 +54,97 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.66.2/L.Control.Locate.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.66.2/L.Control.Locate.min.css"/>
 
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="mathathane_map_manifest.json">
-    <meta name="theme-color" content="#667eea">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Mathathane">
     
-    <!-- Service Worker Registration -->
-    <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./mathathane_map_sw.js')
-          .then(reg => console.log('[PWA] Service Worker registered'))
-          .catch(err => console.log('[PWA] SW registration failed:', err));
-      });
-    }
-    
-    // Enhanced GPS tracking
-    let watchId = null;
-    let lastUpdate = Date.now();
-    
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        const locateBtn = document.querySelector('.leaflet-control-locate');
-        if (locateBtn) {
-          locateBtn.addEventListener('click', () => {
-            if (navigator.geolocation && !watchId) {
-              watchId = navigator.geolocation.watchPosition(
-                pos => {
-                  const now = Date.now();
-                  console.log('[GPS] Lat:', pos.coords.latitude.toFixed(6), 
-                             'Lon:', pos.coords.longitude.toFixed(6),
-                             'Accuracy:', pos.coords.accuracy.toFixed(1) + 'm',
-                             'Interval:', ((now - lastUpdate)/1000).toFixed(1) + 's');
-                  lastUpdate = now;
-                },
-                err => console.error('[GPS] Error:', err.message),
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-              );
-            }
-          });
-        }
-      }, 1000);
-    });
-    </script>
-
     
     <!-- Mapbox Integration -->
     <script>
+    // Store references for proper Mapbox integration
+    window._mapboxLayers = null;
+    window._locateControlRef = null;
+
     // Wait for map to be ready, then add Mapbox layers
     document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
+        // Use whenReady instead of setTimeout
+        function initMapbox() {
             // Find the Leaflet map object
             var mapElement = document.querySelector('.leaflet-container');
-            if (!mapElement || !mapElement._leaflet_id) return;
-
-            var map = mapElement._leaflet_map || window[Object.keys(window).find(key => key.startsWith('map_'))];
-            if (!map) return;
-
-            // Add Mapbox tile layers
-            var mapboxStreets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
-                attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
-                tileSize: 512,
-                zoomOffset: -1,
-                maxZoom: 22,
-                maxNativeZoom: 22
-            });
-
-            var mapboxSatellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
-                attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
-                tileSize: 512,
-                zoomOffset: -1,
-                maxZoom: 22,
-                maxNativeZoom: 19
-            });
-
-            var mapboxHybrid = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
-                attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
-                tileSize: 512,
-                zoomOffset: -1,
-                maxZoom: 22,
-                maxNativeZoom: 19
-            });
-
-            // Add Mapbox Streets as default (bottom layer)
-            mapboxStreets.addTo(map);
-
-            // Update layer control to include Mapbox layers
-            var layerControl = document.querySelector('.leaflet-control-layers');
-            if (layerControl) {
-                var existingControl = layerControl._leaflet_control;
-                if (existingControl) {
-                    existingControl.addBaseLayer(mapboxStreets, "Mapbox Streets");
-                    existingControl.addBaseLayer(mapboxSatellite, "Mapbox Satellite");
-                    existingControl.addBaseLayer(mapboxHybrid, "Mapbox Hybrid");
-                }
+            if (!mapElement || !mapElement._leaflet_id) {
+                setTimeout(initMapbox, 100);
+                return;
             }
 
-            // Improved GPS tracking - more responsive like Google Maps
-            var gpsMarker = null;
-            var accuracyCircle = null;
-            var watchId = null;
+            var map = mapElement._leaflet_map || window[Object.keys(window).find(key => key.startsWith('map_'))];
+            if (!map) {
+                setTimeout(initMapbox, 100);
+                return;
+            }
 
-            map.on('locationfound', function(e) {
-                var radius = e.accuracy / 2;
+            // Use map.whenReady to ensure proper initialization
+            map.whenReady(function() {
+                // Create Mapbox tile layers
+                var mapboxStreets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
+                    attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
+                    tileSize: 512,
+                    zoomOffset: -1,
+                    maxZoom: 22,
+                    maxNativeZoom: 22
+                });
 
-                // Create or update GPS marker with pulsing effect
-                if (!gpsMarker) {
-                    gpsMarker = L.circleMarker(e.latlng, {
-                        color: '#4285f4',
-                        fillColor: '#4285f4',
-                        fillOpacity: 0.8,
-                        weight: 2,
-                        radius: 8
-                    }).addTo(map);
+                var mapboxSatellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
+                    attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
+                    tileSize: 512,
+                    zoomOffset: -1,
+                    maxZoom: 22,
+                    maxNativeZoom: 19
+                });
 
-                    // Add pulsing animation
-                    gpsMarker.getElement().style.animation = 'pulse 2s infinite';
-                } else {
-                    gpsMarker.setLatLng(e.latlng);
+                var mapboxHybrid = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
+                    attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
+                    tileSize: 512,
+                    zoomOffset: -1,
+                    maxZoom: 22,
+                    maxNativeZoom: 19
+                });
+
+                // Store for later use
+                window._mapboxLayers = {
+                    streets: mapboxStreets,
+                    satellite: mapboxSatellite,
+                    hybrid: mapboxHybrid
+                };
+
+                // Remove existing OSM layer and replace with Mapbox Streets
+                map.eachLayer(function(layer) {
+                    if (layer instanceof L.TileLayer &&
+                        (layer._url.includes('openstreetmap') ||
+                         layer._url.includes('tile.osm'))) {
+                        map.removeLayer(layer);
+                    }
+                });
+
+                // Add Mapbox Streets as the base layer (replaces OSM)
+                mapboxStreets.addTo(map);
+
+                // Find the existing layer control using Leaflet's internal reference
+                var layerControl = null;
+                map.eachControl(function(control) {
+                    if (control instanceof L.Control.Layers) {
+                        layerControl = control;
+                    }
+                });
+
+                // If layer control exists, add Mapbox layers properly
+                if (layerControl) {
+                    layerControl.addBaseLayer(mapboxStreets, "Mapbox Streets");
+                    layerControl.addBaseLayer(mapboxSatellite, "Mapbox Satellite");
+                    layerControl.addBaseLayer(mapboxHybrid, "Mapbox Hybrid");
                 }
 
-                // Create or update accuracy circle
-                if (!accuracyCircle) {
-                    accuracyCircle = L.circle(e.latlng, {
-                        radius: radius,
-                        color: '#4285f4',
-                        fillColor: '#4285f4',
-                        fillOpacity: 0.1,
-                        weight: 1
-                    }).addTo(map);
-                } else {
-                    accuracyCircle.setLatLng(e.latlng);
-                    accuracyCircle.setRadius(radius);
-                }
-
-                console.log('[GPS Enhanced] Lat:', e.latlng.lat.toFixed(6),
-                           'Lng:', e.latlng.lng.toFixed(6),
-                           'Accuracy:', radius.toFixed(1) + 'm');
+                console.log('[Mapbox] Integration complete - OSM replaced with Mapbox Streets');
             });
+        }
 
-        }, 1500);
+        initMapbox();
     });
     </script>
 
@@ -214,6 +162,84 @@
         }
     }
     </style>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="mathathane_map_manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mathathane">
+
+    <!-- Service Worker Registration -->
+    <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./mathathane_map_sw.js')
+          .then(reg => console.log('[PWA] Service Worker registered'))
+          .catch(err => console.log('[PWA] SW registration failed:', err));
+      });
+    }
+
+    // Fix GPS: Enable high accuracy and fix accuracy display
+    document.addEventListener('DOMContentLoaded', () => {
+      function patchLocateControl() {
+        var mapElement = document.querySelector('.leaflet-container');
+        if (!mapElement || !mapElement._leaflet_id) {
+          setTimeout(patchLocateControl, 100);
+          return;
+        }
+
+        var map = mapElement._leaflet_map || window[Object.keys(window).find(key => key.startsWith('map_'))];
+        if (!map) {
+          setTimeout(patchLocateControl, 100);
+          return;
+        }
+
+        map.whenReady(function() {
+          // Find and patch the Locate control
+          var locateControl = null;
+          map.eachControl(function(control) {
+            if (control._container && control._container.classList.contains('leaflet-control-locate')) {
+              locateControl = control;
+            }
+          });
+
+          if (locateControl && locateControl.options && locateControl.options.locateOptions) {
+            // Enable high accuracy GPS
+            locateControl.options.locateOptions.enableHighAccuracy = true;
+            console.log('[GPS] High accuracy enabled');
+
+            // Store reference for accuracy display fix
+            window._locateControlRef = locateControl;
+
+            // Patch locationfound handler to show TRUE accuracy (not halved)
+            var originalOnLocationFound = locateControl._onLocationFound;
+            if (originalOnLocationFound) {
+              locateControl._onLocationFound = function(e) {
+                // Store original accuracy before it gets manipulated
+                var trueAccuracy = e.accuracy;
+
+                // Call original handler
+                originalOnLocationFound.call(this, e);
+
+                // Fix the accuracy circle to use TRUE radius (not halved)
+                if (this._circle) {
+                  this._circle.setRadius(trueAccuracy);
+                }
+
+                console.log('[GPS] Lat:', e.latlng.lat.toFixed(6),
+                           'Lng:', e.latlng.lng.toFixed(6),
+                           'True Accuracy:', trueAccuracy.toFixed(1) + 'm');
+              };
+            }
+          }
+        });
+      }
+
+      patchLocateControl();
+    });
+    </script>
 </head>
 <body>
     
