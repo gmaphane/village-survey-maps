@@ -54,115 +54,169 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.66.2/L.Control.Locate.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.66.2/L.Control.Locate.min.css"/>
 
-    
-    
     <!-- Mapbox Integration -->
     <script>
-    // Store references for proper Mapbox integration
-    window._mapboxLayers = null;
-    window._locateControlRef = null;
+    (function() {
+      if (window.__mapboxEnhancementsApplied) {
+        return;
+      }
+      window.__mapboxEnhancementsApplied = true;
 
-    // Wait for map to be ready, then add Mapbox layers
-    document.addEventListener('DOMContentLoaded', function() {
-        // Use whenReady instead of setTimeout
-        function initMapbox() {
-            // Find the Leaflet map object
-            var mapElement = document.querySelector('.leaflet-container');
-            if (!mapElement || !mapElement._leaflet_id) {
-                setTimeout(initMapbox, 100);
-                return;
+      if (!window.L || !L.control) {
+        console.warn('[Mapbox] Leaflet not ready');
+        return;
+      }
+
+      const MAPBOX_TOKEN = 'pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ';
+
+      const originalLayersFactory = L.control.layers;
+      L.control.layers = function(baseLayers, overlays, options) {
+        const control = originalLayersFactory.call(this, baseLayers, overlays, options);
+        const originalOnAdd = control.onAdd;
+        control.onAdd = function(map) {
+          window._leafletLayerControl = control;
+          return originalOnAdd.call(this, map);
+        };
+        return control;
+      };
+
+      const originalLocateFactory = L.control.locate;
+      if (typeof originalLocateFactory === 'function') {
+        L.control.locate = function(options) {
+          const adjustedOptions = Object.assign({ watch: true, setView: 'untilPan' }, options);
+          adjustedOptions.locateOptions = Object.assign(
+            { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
+            options && options.locateOptions
+          );
+
+          const control = originalLocateFactory.call(this, adjustedOptions);
+          const originalOnAdd = control.onAdd;
+          control.onAdd = function(map) {
+            window._leafletLocateControl = control;
+            return originalOnAdd.call(this, map);
+          };
+
+          const originalOnLocationFound = control._onLocationFound ? control._onLocationFound.bind(control) : null;
+          if (originalOnLocationFound) {
+            control._onLocationFound = function(e) {
+              originalOnLocationFound(e);
+              if (control._circle) {
+                control._circle.setRadius(e.accuracy);
+              }
+            };
+          }
+
+          return control;
+        };
+      }
+
+      function findMapInstance() {
+        return Object.keys(window)
+          .filter(key => key.startsWith('map_') && window[key] instanceof L.Map)
+          .map(key => window[key])[0] || null;
+      }
+
+      function whenMapReady(callback) {
+        const map = findMapInstance();
+        if (!map) {
+          setTimeout(() => whenMapReady(callback), 100);
+          return;
+        }
+        if (map._loaded) {
+          callback(map);
+        } else {
+          map.whenReady(() => callback(map));
+        }
+      }
+
+      whenMapReady(function(map) {
+        const mapboxLayers = {
+          streets: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
+            attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
+            tileSize: 512,
+            zoomOffset: -1,
+            maxZoom: 22,
+            maxNativeZoom: 22
+          }),
+          satellite: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
+            attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
+            tileSize: 512,
+            zoomOffset: -1,
+            maxZoom: 22,
+            maxNativeZoom: 19
+          }),
+          hybrid: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
+            attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
+            tileSize: 512,
+            zoomOffset: -1,
+            maxZoom: 22,
+            maxNativeZoom: 19
+          })
+        };
+
+        map.eachLayer(function(layer) {
+          if (layer instanceof L.TileLayer) {
+            const url = (layer._url || '').toLowerCase();
+            if (url.includes('openstreetmap') || url.includes('arcgisonline')) {
+              map.removeLayer(layer);
             }
+          }
+        });
 
-            var map = mapElement._leaflet_map || window[Object.keys(window).find(key => key.startsWith('map_'))];
-            if (!map) {
-                setTimeout(initMapbox, 100);
-                return;
+        mapboxLayers.streets.addTo(map);
+
+        if (window._leafletLayerControl && window._leafletLayerControl.removeLayer) {
+          const control = window._leafletLayerControl;
+          Object.values(control._layers || {}).forEach(entry => {
+            if (entry.layer instanceof L.TileLayer) {
+              const url = (entry.layer._url || '').toLowerCase();
+              if (url.includes('openstreetmap') || url.includes('arcgisonline')) {
+                control.removeLayer(entry.layer);
+              }
             }
-
-            // Use map.whenReady to ensure proper initialization
-            map.whenReady(function() {
-                // Create Mapbox tile layers
-                var mapboxStreets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
-                    attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
-                    tileSize: 512,
-                    zoomOffset: -1,
-                    maxZoom: 22,
-                    maxNativeZoom: 22
-                });
-
-                var mapboxSatellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
-                    attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
-                    tileSize: 512,
-                    zoomOffset: -1,
-                    maxZoom: 22,
-                    maxNativeZoom: 19
-                });
-
-                var mapboxHybrid = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
-                    attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
-                    tileSize: 512,
-                    zoomOffset: -1,
-                    maxZoom: 22,
-                    maxNativeZoom: 19
-                });
-
-                // Store for later use
-                window._mapboxLayers = {
-                    streets: mapboxStreets,
-                    satellite: mapboxSatellite,
-                    hybrid: mapboxHybrid
-                };
-
-                // Remove existing OSM layer and replace with Mapbox Streets
-                map.eachLayer(function(layer) {
-                    if (layer instanceof L.TileLayer &&
-                        (layer._url.includes('openstreetmap') ||
-                         layer._url.includes('tile.osm'))) {
-                        map.removeLayer(layer);
-                    }
-                });
-
-                // Add Mapbox Streets as the base layer (replaces OSM)
-                mapboxStreets.addTo(map);
-
-                // Find the existing layer control using Leaflet's internal reference
-                var layerControl = null;
-                map.eachControl(function(control) {
-                    if (control instanceof L.Control.Layers) {
-                        layerControl = control;
-                    }
-                });
-
-                // If layer control exists, add Mapbox layers properly
-                if (layerControl) {
-                    layerControl.addBaseLayer(mapboxStreets, "Mapbox Streets");
-                    layerControl.addBaseLayer(mapboxSatellite, "Mapbox Satellite");
-                    layerControl.addBaseLayer(mapboxHybrid, "Mapbox Hybrid");
-                }
-
-                console.log('[Mapbox] Integration complete - OSM replaced with Mapbox Streets');
-            });
+          });
+          control.addBaseLayer(mapboxLayers.streets, 'Mapbox Streets');
+          control.addBaseLayer(mapboxLayers.satellite, 'Mapbox Satellite');
+          control.addBaseLayer(mapboxLayers.hybrid, 'Mapbox Hybrid');
         }
 
-        initMapbox();
-    });
+        const dataKey = Object.keys(window).find(key => key.startsWith('layer_control_') && window[key] && window[key].base_layers);
+        if (dataKey) {
+          const dataObj = window[dataKey];
+          Object.keys(dataObj.base_layers).forEach(name => {
+            const layer = dataObj.base_layers[name];
+            if (layer && layer._url) {
+              const url = layer._url.toLowerCase();
+              if (url.includes('openstreetmap') || url.includes('arcgisonline')) {
+                delete dataObj.base_layers[name];
+              }
+            }
+          });
+          dataObj.base_layers['Mapbox Streets'] = mapboxLayers.streets;
+          dataObj.base_layers['Mapbox Satellite'] = mapboxLayers.satellite;
+          dataObj.base_layers['Mapbox Hybrid'] = mapboxLayers.hybrid;
+        }
+
+        window._mapboxLayers = mapboxLayers;
+        console.log('[Mapbox] Basemaps ready');
+      });
+
+      whenMapReady(function(map) {
+        if (window._leafletLocateControl && window._leafletLocateControl.options) {
+          const locateOpts = window._leafletLocateControl.options.locateOptions || {};
+          locateOpts.enableHighAccuracy = true;
+          locateOpts.maximumAge = 0;
+          locateOpts.timeout = 15000;
+          window._leafletLocateControl.options.locateOptions = locateOpts;
+        }
+
+        map.on('locationerror', function(err) {
+          console.warn('[GPS] Error:', err.message);
+        });
+      });
+    })();
     </script>
-
-    <style>
-    /* Pulsing animation for GPS marker */
-    @keyframes pulse {
-        0% {
-            box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7);
-        }
-        70% {
-            box-shadow: 0 0 0 10px rgba(66, 133, 244, 0);
-        }
-        100% {
-            box-shadow: 0 0 0 0 rgba(66, 133, 244, 0);
-        }
-    }
-    </style>
-
+    
     <!-- PWA Manifest -->
     <link rel="manifest" href="tshane_map_manifest.json">
     <meta name="theme-color" content="#667eea">
@@ -173,74 +227,18 @@
 
     <!-- Service Worker Registration -->
     <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./tshane_map_sw.js')
-          .then(reg => console.log('[PWA] Service Worker registered'))
-          .catch(err => console.log('[PWA] SW registration failed:', err));
-      });
-    }
-
-    // Fix GPS: Enable high accuracy and fix accuracy display
-    document.addEventListener('DOMContentLoaded', () => {
-      function patchLocateControl() {
-        var mapElement = document.querySelector('.leaflet-container');
-        if (!mapElement || !mapElement._leaflet_id) {
-          setTimeout(patchLocateControl, 100);
-          return;
-        }
-
-        var map = mapElement._leaflet_map || window[Object.keys(window).find(key => key.startsWith('map_'))];
-        if (!map) {
-          setTimeout(patchLocateControl, 100);
-          return;
-        }
-
-        map.whenReady(function() {
-          // Find and patch the Locate control
-          var locateControl = null;
-          map.eachControl(function(control) {
-            if (control._container && control._container.classList.contains('leaflet-control-locate')) {
-              locateControl = control;
-            }
-          });
-
-          if (locateControl && locateControl.options && locateControl.options.locateOptions) {
-            // Enable high accuracy GPS
-            locateControl.options.locateOptions.enableHighAccuracy = true;
-            console.log('[GPS] High accuracy enabled');
-
-            // Store reference for accuracy display fix
-            window._locateControlRef = locateControl;
-
-            // Patch locationfound handler to show TRUE accuracy (not halved)
-            var originalOnLocationFound = locateControl._onLocationFound;
-            if (originalOnLocationFound) {
-              locateControl._onLocationFound = function(e) {
-                // Store original accuracy before it gets manipulated
-                var trueAccuracy = e.accuracy;
-
-                // Call original handler
-                originalOnLocationFound.call(this, e);
-
-                // Fix the accuracy circle to use TRUE radius (not halved)
-                if (this._circle) {
-                  this._circle.setRadius(trueAccuracy);
-                }
-
-                console.log('[GPS] Lat:', e.latlng.lat.toFixed(6),
-                           'Lng:', e.latlng.lng.toFixed(6),
-                           'True Accuracy:', trueAccuracy.toFixed(1) + 'm');
-              };
-            }
-          }
+    (function() {
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('./tshane_map_sw.js')
+            .then(() => console.log('[PWA] Service Worker registered'))
+            .catch(err => console.warn('[PWA] SW registration failed:', err));
         });
       }
-
-      patchLocateControl();
-    });
+    })();
     </script>
-</head>
+    <!-- End PWA Injection -->
+    </head>
 <body>
     
     
