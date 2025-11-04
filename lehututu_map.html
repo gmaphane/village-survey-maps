@@ -53,6 +53,53 @@
             
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.66.2/L.Control.Locate.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.66.2/L.Control.Locate.min.css"/>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="lehututu_map_manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Lehututu">
+    
+    <!-- Service Worker Registration -->
+    <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./lehututu_map_sw.js')
+          .then(reg => console.log('[PWA] Service Worker registered'))
+          .catch(err => console.log('[PWA] SW registration failed:', err));
+      });
+    }
+    
+    // Enhanced GPS tracking
+    let watchId = null;
+    let lastUpdate = Date.now();
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const locateBtn = document.querySelector('.leaflet-control-locate');
+        if (locateBtn) {
+          locateBtn.addEventListener('click', () => {
+            if (navigator.geolocation && !watchId) {
+              watchId = navigator.geolocation.watchPosition(
+                pos => {
+                  const now = Date.now();
+                  console.log('[GPS] Lat:', pos.coords.latitude.toFixed(6), 
+                             'Lon:', pos.coords.longitude.toFixed(6),
+                             'Accuracy:', pos.coords.accuracy.toFixed(1) + 'm',
+                             'Interval:', ((now - lastUpdate)/1000).toFixed(1) + 's');
+                  lastUpdate = now;
+                },
+                err => console.error('[GPS] Error:', err.message),
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+              );
+            }
+          });
+        }
+      }, 1000);
+    });
+    </script>
 </head>
 <body>
     

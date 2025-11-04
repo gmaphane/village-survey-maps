@@ -3,28 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CI-GCF 2025 Survey - Village Maps</title>
+    <title>CI-GCF 2025 Village Survey Maps</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 40px 20px;
         }
         .container {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
         h1 {
             text-align: center;
@@ -36,66 +30,26 @@
             text-align: center;
             color: #7f8c8d;
             margin-bottom: 40px;
-            font-size: 1.1em;
         }
-        .search-box {
-            margin-bottom: 30px;
+        ul {
+            list-style: none;
         }
-        .search-box input {
-            width: 100%;
-            padding: 15px;
-            font-size: 16px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            transition: border-color 0.3s;
+        li {
+            margin: 15px 0;
         }
-        .search-box input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        .district-section {
-            margin-bottom: 40px;
-        }
-        .district-title {
-            font-size: 1.5em;
-            color: #34495e;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #667eea;
-        }
-        .village-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-        }
-        .village-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            color: white;
-            transition: transform 0.3s, box-shadow 0.3s;
+        a {
             display: block;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: transform 0.3s;
+            font-size: 1.2em;
         }
-        .village-card:hover {
+        a:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-        .village-name {
-            font-size: 1.3em;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        .village-info {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 50px;
-            padding-top: 30px;
-            border-top: 1px solid #ddd;
-            color: #7f8c8d;
         }
         .instructions {
             background: #f8f9fa;
@@ -104,128 +58,50 @@
             margin-bottom: 30px;
             border-left: 4px solid #667eea;
         }
-        .instructions h3 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        .instructions ul {
-            margin-left: 20px;
-        }
-        .instructions li {
-            margin: 5px 0;
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #7f8c8d;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo">
-            <h1>🗺️ CI-GCF 2025</h1>
-            <p class="subtitle">Socio-Economic Baseline Survey - Village Maps</p>
-        </div>
-
+        <h1>🗺️ CI-GCF 2025</h1>
+        <p class="subtitle">Village Survey Maps - Progressive Web Apps</p>
+        
         <div class="instructions">
-            <h3>📱 How to Use These Maps:</h3>
-            <ul>
-                <li>Click on your village name below</li>
-                <li>Save the map to your home screen for easy access</li>
+            <h3>📱 How to Use:</h3>
+            <ul style="list-style: disc; margin-left: 20px;">
+                <li>Click on your village below</li>
+                <li>Tap "Add to Home Screen" to install as an app</li>
                 <li>Grant location permission when asked</li>
-                <li>Use the location button (🎯) to see where you are</li>
-                <li>Maps work offline after first load</li>
+                <li>Works offline after first load!</li>
             </ul>
         </div>
-
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="🔍 Search for a village...">
-        </div>
-
-        <div class="district-section">
-            <h2 class="district-title">Central District (3 villages)</h2>
-            <div class="village-grid">
-                <a href="mathathane_map.html" class="village-card">
-                    <div class="village-name">Mathathane</div>
-                    <div class="village-info">Population: 2,587 | Target: 94 surveys</div>
-                </a>
-                <a href="mmadinare_map.html" class="village-card">
-                    <div class="village-name">Mmadinare</div>
-                    <div class="village-info">Population: 13,198 | Target: 104 surveys</div>
-                </a>
-                <a href="semolale_map.html" class="village-card">
-                    <div class="village-name">Semolale</div>
-                    <div class="village-info">Population: 1,497 | Target: 86 surveys</div>
-                </a>
-            </div>
-        </div>
-        <div class="district-section">
-            <h2 class="district-title">Ngamiland District (3 villages)</h2>
-            <div class="village-grid">
-                <a href="phuduhudu_map.html" class="village-card">
-                    <div class="village-name">Phuduhudu</div>
-                    <div class="village-info">Population: 679 | Target: 69 surveys</div>
-                </a>
-                <a href="sehithwa_map.html" class="village-card">
-                    <div class="village-name">Sehithwa</div>
-                    <div class="village-info">Population: 2,703 | Target: 94 surveys</div>
-                </a>
-                <a href="shorobe_map.html" class="village-card">
-                    <div class="village-name">Shorobe</div>
-                    <div class="village-info">Population: 1,027 | Target: 78 surveys</div>
-                </a>
-            </div>
-        </div>
-        <div class="district-section">
-            <h2 class="district-title">Kgalagadi District (6 villages)</h2>
-            <div class="village-grid">
-                <a href="hukuntsi_map.html" class="village-card">
-                    <div class="village-name">Hukuntsi</div>
-                    <div class="village-info">Population: 5,224 | Target: 100 surveys</div>
-                </a>
-                <a href="kisa_map.html" class="village-card">
-                    <div class="village-name">Kisa</div>
-                    <div class="village-info">Population: 433 | Target: 58 surveys</div>
-                </a>
-                <a href="lehututu_map.html" class="village-card">
-                    <div class="village-name">Lehututu</div>
-                    <div class="village-info">Population: 2,035 | Target: 90 surveys</div>
-                </a>
-                <a href="mabutsane_map.html" class="village-card">
-                    <div class="village-name">Mabutsane</div>
-                    <div class="village-info">Population: 2,507 | Target: 93 surveys</div>
-                </a>
-                <a href="tsabong_map.html" class="village-card">
-                    <div class="village-name">Tsabong</div>
-                    <div class="village-info">Population: 11,651 | Target: 104 surveys</div>
-                </a>
-                <a href="tshane_map.html" class="village-card">
-                    <div class="village-name">Tshane</div>
-                    <div class="village-info">Population: 1,086 | Target: 80 surveys</div>
-                </a>
-            </div>
-        </div>
-
+        
+        <h2 style="margin-bottom: 20px;">Available Villages (12)</h2>
+        <ul>
+        <li><a href="hukuntsi_map.html">Hukuntsi Survey Map</a></li>
+        <li><a href="kisa_map.html">Kisa Survey Map</a></li>
+        <li><a href="lehututu_map.html">Lehututu Survey Map</a></li>
+        <li><a href="mabutsane_map.html">Mabutsane Survey Map</a></li>
+        <li><a href="mathathane_map.html">Mathathane Survey Map</a></li>
+        <li><a href="mmadinare_map.html">Mmadinare Survey Map</a></li>
+        <li><a href="phuduhudu_map.html">Phuduhudu Survey Map</a></li>
+        <li><a href="sehithwa_map.html">Sehithwa Survey Map</a></li>
+        <li><a href="semolale_map.html">Semolale Survey Map</a></li>
+        <li><a href="shorobe_map.html">Shorobe Survey Map</a></li>
+        <li><a href="tsabong_map.html">Tsabong Survey Map</a></li>
+        <li><a href="tshane_map.html">Tshane Survey Map</a></li>
+        </ul>
+        
         <div class="footer">
             <p><strong>Conservation International - Global Conservation Fund</strong></p>
             <p>Socio-Economic Baseline Survey 2025</p>
-            <p>Generated: November 2025</p>
         </div>
     </div>
-
-    <script>
-        // Search functionality
-        const searchInput = document.getElementById('searchInput');
-        const villageCards = document.querySelectorAll('.village-card');
-
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            
-            villageCards.forEach(card => {
-                const villageName = card.querySelector('.village-name').textContent.toLowerCase();
-                if (villageName.includes(searchTerm)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        });
-    </script>
 </body>
 </html>
