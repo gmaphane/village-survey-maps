@@ -6,64 +6,137 @@
     <title>CI-GCF 2025 Village Survey Maps</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #f5f3ff 0%, #fef3f2 50%, #f0f9f4 100%);
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 20px;
+            line-height: 1.6;
         }
+
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 40px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
         }
+
         h1 {
             text-align: center;
-            color: #2c3e50;
-            margin-bottom: 10px;
+            color: #2c2c2c;
+            margin-bottom: 8px;
             font-size: 2.5em;
+            font-weight: 600;
         }
+
         .subtitle {
             text-align: center;
-            color: #7f8c8d;
+            color: #666;
+            margin-bottom: 32px;
+            font-size: 1.1em;
+        }
+
+        .instructions {
+            background: linear-gradient(135deg, #f5f3ff 0%, #fef8f7 100%);
+            padding: 24px;
+            border-radius: 12px;
             margin-bottom: 40px;
+            border-left: 4px solid #a8b5ff;
         }
-        ul {
-            list-style: none;
-        }
-        li {
-            margin: 15px 0;
-        }
-        a {
-            display: block;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: transform 0.3s;
+
+        .instructions h3 {
+            color: #2c2c2c;
+            margin-bottom: 12px;
             font-size: 1.2em;
         }
-        a:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+
+        .instructions ul {
+            list-style: none;
+            padding-left: 0;
         }
-        .instructions {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            border-left: 4px solid #667eea;
+
+        .instructions li {
+            padding: 6px 0;
+            color: #555;
         }
+
+        .instructions li:before {
+            content: "→ ";
+            color: #a8b5ff;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .district-section {
+            margin-bottom: 40px;
+        }
+
+        .district-title {
+            font-size: 1.6em;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid currentColor;
+        }
+
+        .district-title .count {
+            font-size: 0.7em;
+            font-weight: 400;
+            color: #666;
+        }
+
+        .village-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+        }
+
+        .village-link {
+            display: block;
+            padding: 16px 20px;
+            color: #2c2c2c;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            font-size: 1.05em;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .village-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            filter: brightness(0.95);
+        }
+
         .footer {
             text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            color: #7f8c8d;
+            margin-top: 50px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e5e5;
+            color: #666;
+        }
+
+        .footer p {
+            margin: 4px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 24px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .village-list {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -71,34 +144,54 @@
     <div class="container">
         <h1>🗺️ CI-GCF 2025</h1>
         <p class="subtitle">Village Survey Maps - Progressive Web Apps</p>
-        
+
         <div class="instructions">
-            <h3>📱 How to Use:</h3>
-            <ul style="list-style: disc; margin-left: 20px;">
-                <li>Click on your village below</li>
+            <h3>📱 How to Use</h3>
+            <ul>
+                <li>Select your village below</li>
                 <li>Tap "Add to Home Screen" to install as an app</li>
                 <li>Grant location permission when asked</li>
-                <li>Works offline after first load!</li>
+                <li>Works offline after first load</li>
             </ul>
         </div>
-        
-        <h2 style="margin-bottom: 20px;">Available Villages (13)</h2>
-        <ul>
-        <li><a href="gobojango_map.html">Gobojango Survey Map</a></li>
-        <li><a href="hukuntsi_map.html">Hukuntsi Survey Map</a></li>
-        <li><a href="kisa_map.html">Kisa Survey Map</a></li>
-        <li><a href="lehututu_map.html">Lehututu Survey Map</a></li>
-        <li><a href="mabutsane_map.html">Mabutsane Survey Map</a></li>
-        <li><a href="mathathane_map.html">Mathathane Survey Map</a></li>
-        <li><a href="mmadinare_map.html">Mmadinare Survey Map</a></li>
-        <li><a href="phuduhudu_map.html">Phuduhudu Survey Map</a></li>
-        <li><a href="sehithwa_map.html">Sehithwa Survey Map</a></li>
-        <li><a href="semolale_map.html">Semolale Survey Map</a></li>
-        <li><a href="shorobe_map.html">Shorobe Survey Map</a></li>
-        <li><a href="tsabong_map.html">Tsabong Survey Map</a></li>
-        <li><a href="tshane_map.html">Tshane Survey Map</a></li>
-        </ul>
-        
+
+        <div class="district-section">
+            <h2 class="district-title" style="color: #a8b5ff;">
+                Ngamiland <span class="count">(3 villages)</span>
+            </h2>
+            <ul class="village-list">
+                <li><a href="phuduhudu_map.html" class="village-link" style="background: #a8b5ff;">Phuduhudu</a></li>
+                <li><a href="sehithwa_map.html" class="village-link" style="background: #a8b5ff;">Sehithwa</a></li>
+                <li><a href="shorobe_map.html" class="village-link" style="background: #a8b5ff;">Shorobe</a></li>
+            </ul>
+        </div>
+
+        <div class="district-section">
+            <h2 class="district-title" style="color: #ffb5a8;">
+                Bobirwa <span class="count">(4 villages)</span>
+            </h2>
+            <ul class="village-list">
+                <li><a href="gobojango_map.html" class="village-link" style="background: #ffb5a8;">Gobojango</a></li>
+                <li><a href="mathathane_map.html" class="village-link" style="background: #ffb5a8;">Mathathane</a></li>
+                <li><a href="mmadinare_map.html" class="village-link" style="background: #ffb5a8;">Mmadinare</a></li>
+                <li><a href="semolale_map.html" class="village-link" style="background: #ffb5a8;">Semolale</a></li>
+            </ul>
+        </div>
+
+        <div class="district-section">
+            <h2 class="district-title" style="color: #b5d4a8;">
+                Kgalagadi <span class="count">(6 villages)</span>
+            </h2>
+            <ul class="village-list">
+                <li><a href="hukuntsi_map.html" class="village-link" style="background: #b5d4a8;">Hukuntsi</a></li>
+                <li><a href="kisa_map.html" class="village-link" style="background: #b5d4a8;">Kisa</a></li>
+                <li><a href="lehututu_map.html" class="village-link" style="background: #b5d4a8;">Lehututu</a></li>
+                <li><a href="mabutsane_map.html" class="village-link" style="background: #b5d4a8;">Mabutsane</a></li>
+                <li><a href="tsabong_map.html" class="village-link" style="background: #b5d4a8;">Tsabong</a></li>
+                <li><a href="tshane_map.html" class="village-link" style="background: #b5d4a8;">Tshane</a></li>
+            </ul>
+        </div>
+
         <div class="footer">
             <p><strong>Conservation International - Global Conservation Fund</strong></p>
             <p>Socio-Economic Baseline Survey 2025</p>
