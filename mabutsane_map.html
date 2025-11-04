@@ -101,6 +101,7 @@
     });
     </script>
 
+    
     <!-- Mapbox Integration -->
     <script>
     // Wait for map to be ready, then add Mapbox layers
@@ -118,21 +119,24 @@
                 attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
                 tileSize: 512,
                 zoomOffset: -1,
-                maxZoom: 22
+                maxZoom: 22,
+                maxNativeZoom: 22
             });
 
             var mapboxSatellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
                 attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
                 tileSize: 512,
                 zoomOffset: -1,
-                maxZoom: 22
+                maxZoom: 22,
+                maxNativeZoom: 19
             });
 
             var mapboxHybrid = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
                 attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
                 tileSize: 512,
                 zoomOffset: -1,
-                maxZoom: 22
+                maxZoom: 22,
+                maxNativeZoom: 19
             });
 
             // Add Mapbox Streets as default (bottom layer)
