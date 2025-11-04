@@ -1,9 +1,10 @@
 # CI-GCF 2025 Village Survey Maps
 
-Progressive Web Apps for field surveys in 12 villages.
+Progressive Web Apps for field surveys in 13 villages.
 
 ## Available Maps
 
+- [Gobojango](gobojango_map.html)
 - [Hukuntsi](hukuntsi_map.html)
 - [Kisa](kisa_map.html)
 - [Lehututu](lehututu_map.html)
