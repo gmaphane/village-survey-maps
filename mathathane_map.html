@@ -67,8 +67,6 @@
         return;
       }
 
-      const MAPBOX_TOKEN = 'pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ';
-
       const originalLayersFactory = L.control.layers;
       L.control.layers = function(baseLayers, overlays, options) {
         const control = originalLayersFactory.call(this, baseLayers, overlays, options);
@@ -142,38 +140,62 @@
       }
 
       whenMapReady(function(map) {
-        const mapboxLayers = {
-          streets: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
-            attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
-            tileSize: 512,
-            zoomOffset: -1,
-            maxZoom: 22,
-            maxNativeZoom: 22
+        // OpenStreetMap tile layers (no authentication required)
+        const osmLayers = {
+          standard: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
           }),
-          satellite: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
-            attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
-            tileSize: 512,
-            zoomOffset: -1,
-            maxZoom: 22,
-            maxNativeZoom: 19
+          satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© <a href="https://www.esri.com/">Esri</a>',
+            maxZoom: 18
           }),
-          hybrid: L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2xhZHdlbGxtIiwiYSI6ImNsMDMyc3c3dDA4MDUzZGhwM3B5eWJjd3RjIn0.qu_A5kxumH4V_A0V7omqkQ', {
-            attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
-            tileSize: 512,
-            zoomOffset: -1,
-            maxZoom: 22,
-            maxNativeZoom: 19
+          topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> contributors',
+            maxZoom: 17
           })
         };
 
+        // Remove old tile layers
         map.eachLayer(function(layer) {
           if (layer instanceof L.TileLayer) {
             const url = (layer._url || '').toLowerCase();
-            if (url.includes('openstreetmap') || url.includes('arcgisonline')) {
+            if (url.includes('mapbox') || url.includes('openstreetmap') || url.includes('arcgisonline')) {
               map.removeLayer(layer);
             }
           }
         });
+
+        // Add OpenStreetMap as default
+        osmLayers.standard.addTo(map);
+
+        // Update layer control
+        if (window._leafletLayerControl && window._leafletLayerControl.removeLayer) {
+          const control = window._leafletLayerControl;
+          Object.values(control._layers || {}).forEach(entry => {
+            if (entry.layer instanceof L.TileLayer) {
+              control.removeLayer(entry.layer);
+            }
+          });
+          control.addBaseLayer(osmLayers.standard, 'OpenStreetMap');
+          control.addBaseLayer(osmLayers.satellite, 'Satellite');
+          control.addBaseLayer(osmLayers.topo, 'Topographic');
+        }
+
+        // Update data object if exists
+        const dataKey = Object.keys(window).find(key => key.startsWith('layer_control_') && window[key] && window[key].base_layers);
+        if (dataKey) {
+          const dataObj = window[dataKey];
+          dataObj.base_layers = {
+            'OpenStreetMap': osmLayers.standard,
+            'Satellite': osmLayers.satellite,
+            'Topographic': osmLayers.topo
+          };
+        }
+
+        window._osmLayers = osmLayers;
+        console.log('[OpenStreetMap] Basemaps ready');
+      });
 
         mapboxLayers.streets.addTo(map);
 
