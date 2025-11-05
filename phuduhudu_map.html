@@ -84,8 +84,9 @@
       if (typeof originalLocateFactory === 'function') {
         L.control.locate = function(options) {
           const adjustedOptions = Object.assign({ watch: true, setView: 'untilPan' }, options);
+          // Start with fast network location, upgrade to GPS after first fix
           adjustedOptions.locateOptions = Object.assign(
-            { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
+            { enableHighAccuracy: false, maximumAge: 5000, timeout: 10000 },
             options && options.locateOptions
           );
 
@@ -96,12 +97,23 @@
             return originalOnAdd.call(this, map);
           };
 
+          let firstFixReceived = false;
           const originalOnLocationFound = control._onLocationFound ? control._onLocationFound.bind(control) : null;
           if (originalOnLocationFound) {
             control._onLocationFound = function(e) {
               originalOnLocationFound(e);
               if (control._circle) {
                 control._circle.setRadius(e.accuracy);
+              }
+
+              // Progressive enhancement: upgrade to high accuracy after first fix
+              if (!firstFixReceived) {
+                firstFixReceived = true;
+                if (this.options && this.options.locateOptions) {
+                  this.options.locateOptions.enableHighAccuracy = true;
+                  this.options.locateOptions.maximumAge = 5000;
+                  console.log('[GPS] Upgraded to high accuracy mode');
+                }
               }
             };
           }
@@ -202,15 +214,57 @@
       });
 
       whenMapReady(function(map) {
+        // GPS Status Indicator
+        const statusControl = L.control({ position: 'topleft' });
+        statusControl.onAdd = function() {
+          const div = L.DomUtil.create('div', 'gps-status-indicator');
+          div.style.cssText = 'background: white; padding: 8px 12px; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.3); font-size: 12px; display: none;';
+          div.innerHTML = '<span style="color: #2196F3;">● </span><span id="gps-status-text">Acquiring location...</span>';
+          return div;
+        };
+        statusControl.addTo(map);
+        window._gpsStatusControl = statusControl;
+
+        // Enhanced GPS configuration with progressive enhancement
         if (window._leafletLocateControl && window._leafletLocateControl.options) {
           const locateOpts = window._leafletLocateControl.options.locateOptions || {};
-          locateOpts.enableHighAccuracy = true;
-          locateOpts.maximumAge = 0;
-          locateOpts.timeout = 15000;
+          locateOpts.enableHighAccuracy = false; // Start fast, upgrade later
+          locateOpts.maximumAge = 5000; // Allow 5-second caching
+          locateOpts.timeout = 10000; // Reduced timeout
           window._leafletLocateControl.options.locateOptions = locateOpts;
         }
 
+        // GPS Status Feedback
+        map.on('locateactivate', function() {
+          const statusDiv = document.querySelector('.gps-status-indicator');
+          if (statusDiv) {
+            statusDiv.style.display = 'block';
+            document.getElementById('gps-status-text').textContent = 'Acquiring location...';
+          }
+        });
+
+        map.on('locationfound', function(e) {
+          const statusDiv = document.querySelector('.gps-status-indicator');
+          if (statusDiv) {
+            const accuracy = Math.round(e.accuracy);
+            const isHighAccuracy = window._leafletLocateControl?.options?.locateOptions?.enableHighAccuracy;
+            const statusText = isHighAccuracy ?
+              `GPS locked (±${accuracy}m)` :
+              `Network location (±${accuracy}m)`;
+            document.getElementById('gps-status-text').textContent = statusText;
+            setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+          }
+          console.log(`[GPS] Location found: accuracy ${Math.round(e.accuracy)}m`);
+        });
+
         map.on('locationerror', function(err) {
+          const statusDiv = document.querySelector('.gps-status-indicator');
+          if (statusDiv) {
+            const statusSpan = statusDiv.querySelector('span');
+            if (statusSpan) statusSpan.style.color = '#f44336';
+            document.getElementById('gps-status-text').textContent = 'Location unavailable';
+            setTimeout(() => { statusDiv.style.display = 'none'; }, 5000);
+          }
           console.warn('[GPS] Error:', err.message);
         });
       });
