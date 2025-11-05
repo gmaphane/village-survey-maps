@@ -1,6 +1,6 @@
 # CI-GCF 2025 Village Survey Maps
 
-Progressive Web Apps for field surveys in 13 villages.
+Progressive Web Apps for field surveys in 14 villages.
 
 ## Available Maps
 
@@ -11,6 +11,7 @@ Progressive Web Apps for field surveys in 13 villages.
 - [Mabutsane](mabutsane_map.html)
 - [Mathathane](mathathane_map.html)
 - [Mmadinare](mmadinare_map.html)
+- [Nokaneng](nokaneng_map.html)
 - [Phuduhudu](phuduhudu_map.html)
 - [Sehithwa](sehithwa_map.html)
 - [Semolale](semolale_map.html)
